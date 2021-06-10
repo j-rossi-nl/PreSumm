@@ -207,17 +207,24 @@ def hashhex(s):
 class BertData():
     def __init__(self, args):
         self.args = args
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-        self.sep_token = '[SEP]'
-        self.cls_token = '[CLS]'
-        self.pad_token = '[PAD]'
-        self.tgt_bos = '[unused0]'
-        self.tgt_eos = '[unused1]'
-        self.tgt_sent_split = '[unused2]'
-        self.sep_vid = self.tokenizer.vocab[self.sep_token]
-        self.cls_vid = self.tokenizer.vocab[self.cls_token]
-        self.pad_vid = self.tokenizer.vocab[self.pad_token]
+        self.tgt_bos = '<tgt_bos>'                    # unused0
+        self.tgt_eos = '<tgt_eos>'                    # unused1
+        self.tgt_sent_split = '<tgt_ss>'              # unused2
+
+        self.tokenizer = XLNetTokenizer.from_pretrained(
+            'xlnet-large-cased',
+            do_lower_case=True,
+            additional_special_tokens=[self.tgt_bos, self.tgt_eos, self.tgt_sent_split]
+        )
+
+        self.sep_token = self.tokenizer.sep_token
+        self.cls_token = self.tokenizer.cls_token
+        self.pad_token = self.tokenizer.pad_token
+
+        self.sep_vid = self.tokenizer.sep_token_id
+        self.cls_vid = self.tokenizer.cls_token_id
+        self.pad_vid = self.tokenizer.pad_token_id
 
     def preprocess(self, src, tgt, sent_labels, use_bert_basic_tokenizer=False, is_test=False):
 
@@ -258,8 +265,9 @@ class BertData():
         cls_ids = [i for i, t in enumerate(src_subtoken_idxs) if t == self.cls_vid]
         sent_labels = sent_labels[:len(cls_ids)]
 
-        tgt_subtokens_str = '[unused0] ' + ' [unused2] '.join(
-            [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused1]'
+        tgt_subtokens_str = self.tgt_bos + self.tgt_sent_split.join(
+            [' '.join(self.tokenizer.tokenize(' '.join(tt))) for tt
+             in tgt]) + self.tgt_eos
         tgt_subtoken = tgt_subtokens_str.split()[:self.args.max_tgt_ntokens]
         if ((not is_test) and len(tgt_subtoken) < self.args.min_tgt_ntokens):
             return None

@@ -1,6 +1,8 @@
 import bisect
 import gc
 import glob
+import os
+import pdb
 import random
 
 import torch
@@ -49,12 +51,13 @@ class Batch(object):
             setattr(self, 'mask_src', mask_src.to(device))
             setattr(self, 'mask_tgt', mask_tgt.to(device))
 
-
             if (is_test):
-                src_str = [x[-2] for x in data]
+                src_str = [x[5] for x in data]
                 setattr(self, 'src_str', src_str)
-                tgt_str = [x[-1] for x in data]
+                tgt_str = [x[6] for x in data]
                 setattr(self, 'tgt_str', tgt_str)
+                opinion_id = [x[7] for x in data]
+                setattr(self, 'opinion_id', opinion_id)
 
     def __len__(self):
         return self.batch_size
@@ -81,7 +84,7 @@ def load_dataset(args, corpus_type, shuffle):
         return dataset
 
     # Sort the glob output by file name (by increasing indexes).
-    pts = sorted(glob.glob(args.bert_data_path + '.' + corpus_type + '.[0-9]*.pt'))
+    pts = sorted(glob.glob(os.path.join(args.bert_data_path, f"*.{corpus_type}.*.pt")))
     if pts:
         if (shuffle):
             random.shuffle(pts)
@@ -209,10 +212,9 @@ class DataIterator(object):
         clss = clss[:max_sent_id]
         # src_txt = src_txt[:max_sent_id]
 
-
-
         if(is_test):
-            return src, tgt, segs, clss, src_sent_labels, src_txt, tgt_txt
+            opinion_id = ex['opinion_id']
+            return src, tgt, segs, clss, src_sent_labels, src_txt, tgt_txt, opinion_id
         else:
             return src, tgt, segs, clss, src_sent_labels
 

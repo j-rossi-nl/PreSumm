@@ -322,7 +322,7 @@ class TextDataloader(object):
         # src_txt = src_txt[:max_sent_id]
 
         if (is_test):
-            return src, tgt, segs, clss, src_sent_labels, src_txt, tgt_txt
+            return src, tgt, segs, clss, src_sent_labels, src_txt, tgt_txt, ex['opinion_id']
         else:
             return src, tgt, segs, clss, src_sent_labels
 

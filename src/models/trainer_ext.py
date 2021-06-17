@@ -255,7 +255,9 @@ class Trainer(object):
                         stats.update(batch_stats)
 
                         sent_scores = sent_scores + mask.float()
+                        sent_scores = torch.nn.functional.softmax(sent_scores)
                         sent_scores = sent_scores.cpu().data.numpy()
+
                         selected_ids = np.argsort(-sent_scores, 1)
                     # selected_ids = np.sort(selected_ids,1)
                     for i, idx in enumerate(selected_ids):
@@ -287,7 +289,7 @@ class Trainer(object):
                         # "gold": " ".join(gold),
                         # "pred": " ".join(pred),
                         "gold_ids": labels.cpu().numpy().ravel().tolist(),
-                        "pred_ids": (-sent_scores).ravel().tolist()
+                        "pred_ids": sent_scores.ravel().tolist()
                     }
                     save_report.write(json.dumps(data_report) + '\n')
 
